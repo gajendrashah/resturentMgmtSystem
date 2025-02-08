@@ -1,0 +1,63 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.env
+*.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+*.sqlite3  # If you're using SQLite for development
+
+# Django
+*.log
+local_settings.py
+db.sqlite3  # If using SQLite for development
+media/      # User-uploaded files
+staticfiles/  # Collected static files (if using collectstatic)
+
+# Environments
+.env        # Environment variables
+.env.*      # Other environment-specific files
+
+# VS Code
+.vscode/
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# IDEs
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Node (if using npm/yarn for front-end)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build
+dist/
+build/
+
+# Coverage reports
+htmlcov/
+.coverage
+.tox/
+.nox/
+.cache/
+coverage.xml
+*.cover
+.hypothesis/
+
+# Docker
+*.pid

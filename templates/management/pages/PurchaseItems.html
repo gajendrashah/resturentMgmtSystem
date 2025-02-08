@@ -1,0 +1,272 @@
+{% extends 'management/base.html' %}
+{% load static %}
+{% block title %}Purchase Items{% endblock %}
+{% block content %}
+<div class="content-body">
+    <div class="container-fluid py-4">
+
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <h2 class="card-title">Create Purchase</h2>
+                        <form method="post" id="purchaseForm">
+                            {% csrf_token %}
+                            {{ form.as_p }}
+                            <button type="submit" class="btn btn-primary">Submit</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <h6>Daily Total</h6>
+                        <h4>Rs. <span id="today-total">0.00</span></h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <h6>Weekly Total</h6>
+                        <h4>Rs. <span id="weekly-total">0.00</span></h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body">
+                        <h6>Monthly Total</h6>
+                        <h4>Rs. <span id="monthly-total">0.00</span></h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-white">
+                    <div class="card-body">
+                        <h6>Filtered Total</h6>
+                        <h4>Rs. <span id="custom-range-total">0.00</span></h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <div>
+                                <h4 class="card-title d-inline">Purchase History</h4>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    <label>From:</label>
+                                    <input type="date" id="start-date" class="form-control" onchange="filterByDate()">
+                                </div>
+                                <div>
+                                    <label>To:</label>
+                                    <input type="date" id="end-date" class="form-control" onchange="filterByDate()">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped verticle-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Item Name</th>
+                                        <th>Quantity</th>
+                                        <th>Total Cost</th>
+                                        <th>Bill Number</th>
+                                        <th>Remarks</th>
+                                        <th>Purchase Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="purchase-table-body">
+                                    {% for purchase in purchases %}
+                                    <tr data-purchase-date="{{ purchase.purchase_date|date:'Y-m-d' }}">
+                                        <td>{{ purchase.item_name }}</td>
+                                        <td>{{ purchase.quantity }}</td>
+                                        <td>Rs. <span class="total-cost">{{ purchase.total_cost }}</span></td>
+                                        <td>{{ purchase.bill_number }}</td>
+                                        <td>{{ purchase.remarks }}</td>
+                                        <td>{{ purchase.purchase_date }}</td>
+                                        <td>
+                                            <span>
+                                                <a href="#" onclick="editPurchase({{ purchase.id }})" data-toggle="tooltip" data-placement="top" title="Edit">
+                                                    <i class="fa fa-pencil color-muted"></i>
+                                                </a>
+                                                <a href="#" onclick="deletePurchase({{ purchase.id }})" data-toggle="tooltip" data-placement="top" title="Delete">
+                                                    <i class="fa fa-trash color-danger"></i>
+                                                </a>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    calculateTotals();
+    
+    // Set default date filter values to today
+    const today = new Date();
+    const startDate = document.getElementById('start-date');
+    const endDate = document.getElementById('end-date');
+    startDate.value = today.toISOString().split('T')[0];
+    endDate.value = today.toISOString().split('T')[0];
+    filterByDate();
+});
+
+function calculateTotals() {
+    const rows = document.querySelectorAll('#purchase-table-body tr');
+    let dailyTotal = 0;
+    let weeklyTotal = 0;
+    let monthlyTotal = 0;
+    
+    const today = new Date();
+    const oneWeekAgo = new Date(today);
+    oneWeekAgo.setDate(today.getDate() - 7);
+    const oneMonthAgo = new Date(today);
+    oneMonthAgo.setMonth(today.getMonth() - 1);
+
+    rows.forEach(row => {
+        const purchaseDate = new Date(row.getAttribute('data-purchase-date'));
+        const totalCost = parseFloat(row.querySelector('.total-cost').textContent);
+
+        if (purchaseDate.toDateString() === today.toDateString()) {
+            dailyTotal += totalCost;
+        }
+        if (purchaseDate >= oneWeekAgo) {
+            weeklyTotal += totalCost;
+        }
+        if (purchaseDate >= oneMonthAgo) {
+            monthlyTotal += totalCost;
+        }
+    });
+
+    document.getElementById('today-total').textContent = dailyTotal.toFixed(2);
+    document.getElementById('weekly-total').textContent = weeklyTotal.toFixed(2);
+    document.getElementById('monthly-total').textContent = monthlyTotal.toFixed(2);
+}
+
+document.getElementById('purchaseForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    fetch('', {
+        method: 'POST',
+        body: new FormData(this),
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if(data.message === 'Purchase successful') {
+            alert('Purchase created successfully!');
+            this.reset();
+            location.reload();
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while creating the purchase');
+    });
+});
+
+function filterByDate() {
+    const startDate = document.getElementById('start-date').value;
+    const endDate = document.getElementById('end-date').value;
+    
+    if (!startDate || !endDate) return;
+
+    const rows = document.querySelectorAll('#purchase-table-body tr');
+    let filteredTotal = 0;
+
+    rows.forEach(row => {
+        const purchaseDate = row.getAttribute('data-purchase-date');
+        const totalCost = parseFloat(row.querySelector('.total-cost').textContent);
+
+        if (purchaseDate >= startDate && purchaseDate <= endDate) {
+            row.style.display = '';
+            filteredTotal += totalCost;
+        } else {
+            row.style.display = 'none';
+        }
+    });
+
+    document.getElementById('custom-range-total').textContent = filteredTotal.toFixed(2);
+}
+
+function editPurchase(id) {
+    fetch(`/edit_purchase/${id}/`)
+    .then(response => response.json())
+    .then(data => {
+        document.querySelector('[name="item_name"]').value = data.item_name;
+        document.querySelector('[name="quantity"]').value = data.quantity;
+        document.querySelector('[name="total_cost"]').value = data.total_cost;
+        document.querySelector('[name="bill_number"]').value = data.bill_number;
+        document.querySelector('[name="remarks"]').value = data.remarks;
+        
+        const form = document.getElementById('purchaseForm');
+        form.onsubmit = function(e) {
+            e.preventDefault();
+            fetch(`/edit_purchase/${id}/`, {
+                method: 'POST',
+                body: new FormData(this),
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.message === 'Purchase updated successfully') {
+                    alert('Purchase updated successfully!');
+                    location.reload();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while updating the purchase');
+            });
+        };
+    });
+}
+
+function deletePurchase(id) {
+    if(confirm('Are you sure you want to delete this purchase?')) {
+        fetch(`/delete_purchase/${id}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if(data.message === 'Purchase deleted successfully') {
+                alert('Purchase deleted successfully!');
+                location.reload();
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while deleting the purchase');
+        });
+    }
+}
+</script>
+{% endblock %}

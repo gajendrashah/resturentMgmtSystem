@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Print Sale - {{ sale.id }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .sale-details { margin: 20px; }
+        .sale-details h1 { font-size: 24px; }
+        .sale-details p { font-size: 16px; }
+        .items-table { width: 100%; border-collapse: collapse; }
+        .items-table th, .items-table td { border: 1px solid #000; padding: 8px; }
+    </style>
+</head>
+<body>
+    <div class="sale-details">
+        <h1>Sale #{{ sale.id }}</h1>
+        <p><strong>Date:</strong> {{ sale.sale_date }}</p>
+        <p><strong>Status:</strong> {{ sale.status }}</p>
+        <h2>Items:</h2>
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Quantity</th>
+                    <th>Price</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in sale.cart.cartitems.all %}
+                <tr>
+                    <td>{{ item.menu_item.name }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>${{ item.menu_item.price }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

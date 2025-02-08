@@ -1,0 +1,607 @@
+{% extends 'management/base.html' %}
+{% load static %}
+{% block title %}Room Orders{% endblock %}
+{% block content %}
+<div class="content-body">
+    <div class="container-fluid py-4">
+        <div class="row">
+            <!-- Customer Selection -->
+            <div class="col-md-3">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Customer Selection</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group">
+                            {% for customer in customers %}
+                                <button class="list-group-item list-group-item-action" onclick="selectCustomer({{ customer.id }}, '{{ customer.name }}')">
+                                    {{ customer.name }} - Room {{ customer.room.room_number }}
+                                </button>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Menu Section -->
+            <div class="col-md-6">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">Menu</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            {% for item in menu_items %}
+                                <div class="col-md-4 mb-3">
+                                    <div class="card border-0 shadow-sm h-100">
+                                        <div class="text-center p-2">
+                                            <img src="{{ item.image.url }}" class="rounded" alt="{{ item.name }}" style="width: 80px; height: 80px; object-fit: cover;">
+                                            <div class="mt-2">
+                                                <h6 class="mb-0">{{ item.name }}</h6>
+                                                <p class="text-muted mb-1">Rs.{{ item.price }}</p>
+                                            </div>
+                                        </div>
+                                        <div class="card-footer bg-transparent border-0 text-center">
+                                            <div class="d-flex align-items-center justify-content-center">
+                                                <button class="btn btn-sm btn-secondary" onclick="decreaseMenuQuantity({{ item.id }}, '{{ item.name }}', {{ item.price }})">-</button>
+                                                <span id="menu-quantity-{{ item.id }}" class="mx-2">0</span>
+                                                <button class="btn btn-sm btn-secondary" onclick="increaseMenuQuantity({{ item.id }}, '{{ item.name }}', {{ item.price }})">+</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% if forloop.counter|divisibleby:3 %}
+                                    </div><div class="row">
+                                {% endif %}
+                            {% empty %}
+                                <p class="text-center">No menu items available.</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order List -->
+            <div class="col-md-3">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-danger text-white">
+                        <h5 class="mb-0">Order List</h5>
+                        <span id="selectedCustomer" class="badge bg-warning text-dark"></span>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group" id="orderList"></ul>
+                        <div class="mt-3 text-center">
+                            <h6 class="fw-bold">Total: Rs<span id="orderTotal">0.00</span></h6>
+                            <button class="btn btn-success w-100 mb-2" onclick="submitOrder()">Submit Order</button>
+                            <button class="btn btn-info w-100" onclick="printBill()">Print Bill</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Orders Table Section -->
+        <div class="row mb-4">
+            <div class="col-lg-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <div>
+                                <h4 class="card-title d-inline">Orders</h4>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    <label>From:</label>
+                                    <input type="date" id="dateFrom" class="form-control" onchange="filterOrders()">
+                                </div>
+                                <div>
+                                    <label>To:</label>
+                                    <input type="date" id="dateTo" class="form-control" onchange="filterOrders()">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-md-3">
+                                <div class="card bg-primary text-white">
+                                    <div class="card-body">
+                                        <h6>Daily Total</h6>
+                                        <h4>Rs. <span id="dailyTotal">0.00</span></h4>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-success text-white">
+                                    <div class="card-body">
+                                        <h6>Weekly Total</h6>
+                                        <h4>Rs. <span id="weeklyTotal">0.00</span></h4>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-info text-white">
+                                    <div class="card-body">
+                                        <h6>Monthly Total</h6>
+                                        <h4>Rs. <span id="monthlyTotal">0.00</span></h4>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-warning text-white">
+                                    <div class="card-body">
+                                        <h6>Filtered Total</h6>
+                                        <h4>Rs. <span id="filteredTotal">0.00</span></h4>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped verticle-middle">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Customer</th>
+                                        <th scope="col">Items</th>
+                                        <th scope="col">Total</th>
+                                        <th scope="col">Status</th>
+                                        <th scope="col">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for order in orders %}
+                                    <tr data-order-date="{{ order.created_at|date:'Y-m-d' }}">
+                                        <td><span class="label gradient-1 btn-rounded">{{ order.customer.name }} - Room {{ order.customer.room.room_number }}</span></td>
+                                        <td>
+                                            {% for item in cart_items %}
+                                                {% if item.cart == order %}
+                                                    <p class="order-item" data-order-id="{{ order.id }}" data-quantity="{{ item.quantity }}" data-price="{{ item.menu_item.price }}" data-name="{{ item.menu_item.name }}">
+                                                        {{ item.menu_item.name }} - {{ item.quantity }} x Rs.{{ item.menu_item.price }}
+                                                    </p>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </td>
+                                        <td>Rs. <span class="total-price" data-order-id="{{ order.id }}">{{ order.total }}</span></td>
+                                        <td><span class="label gradient-1 btn-rounded">{{ order.status }}</span></td>
+                                        <td>
+                                            <span>
+                                                <button class="btn btn-link" onclick="printBillFromOrder('{{ order.id }}', '{{ order.customer.name }}')" data-toggle="tooltip" data-placement="top" title="Print">
+                                                    <i class="fa fa-print color-danger"></i>
+                                                </button>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let selectedCustomerId = null;
+let selectedCustomerName = null;
+let orderItems = [];
+let menuQuantities = {};
+
+function selectCustomer(customerId, customerName) {
+    selectedCustomerId = customerId;
+    selectedCustomerName = customerName;
+    document.getElementById('selectedCustomer').textContent = customerName;
+    orderItems = [];
+    menuQuantities = {};
+    updateOrderList();
+    document.querySelectorAll('[id^="menu-quantity-"]').forEach(el => {
+        el.textContent = '0';
+    });
+}
+
+function increaseMenuQuantity(itemId, itemName, itemPrice) {
+    if (!selectedCustomerId) {
+        alert('Please select a customer first');
+        return;
+    }
+    menuQuantities[itemId] = (menuQuantities[itemId] || 0) + 1;
+    document.getElementById(`menu-quantity-${itemId}`).textContent = menuQuantities[itemId];
+    addToOrder(itemId, itemName, itemPrice);
+}
+
+function decreaseMenuQuantity(itemId, itemName, itemPrice) {
+    if (menuQuantities[itemId] && menuQuantities[itemId] > 0) {
+        menuQuantities[itemId] -= 1;
+        document.getElementById(`menu-quantity-${itemId}`).textContent = menuQuantities[itemId];
+        removeFromOrder(itemId);
+    }
+}
+
+function addToOrder(itemId, itemName, itemPrice) {
+    let item = orderItems.find(i => i.menu_item === itemId);
+    if (item) {
+        item.quantity += 1;
+    } else {
+        orderItems.push({ menu_item: itemId, name: itemName, price: itemPrice, quantity: 1 });
+    }
+    updateOrderList();
+}
+
+function removeFromOrder(itemId) {
+    let itemIndex = orderItems.findIndex(i => i.menu_item === itemId);
+    if (itemIndex !== -1) {
+        if (orderItems[itemIndex].quantity > 1) {
+            orderItems[itemIndex].quantity -= 1;
+        } else {
+            orderItems.splice(itemIndex, 1);
+        }
+    }
+    updateOrderList();
+}
+
+function updateOrderList() {
+    const orderList = document.getElementById('orderList');
+    orderList.innerHTML = '';
+    let total = 0;
+    
+    orderItems.forEach((item) => {
+        const li = document.createElement('li');
+        li.className = 'list-group-item d-flex justify-content-between align-items-center';
+        li.innerHTML = `
+            ${item.name} 
+            <span>
+                ${item.quantity} x Rs.${item.price.toFixed(2)} = Rs.${(item.price * item.quantity).toFixed(2)}
+            </span>
+        `;
+        orderList.appendChild(li);
+        total += item.price * item.quantity;
+    });
+    
+    document.getElementById('orderTotal').textContent = total.toFixed(2);
+}
+
+function printBill() {
+    if (!selectedCustomerId || orderItems.length === 0) {
+        alert('No items to print');
+        return;
+    }
+
+    let printWindow = window.open('', '', 'width=220,height=600');
+    let total = 0;
+
+    const logoUrl = "{% static 'management/images/logo.png' %}";
+    const absoluteLogoUrl = window.location.origin + logoUrl;
+
+    let billContent = `
+        <html>
+        <head>
+            <title>Bill</title>
+            <style>
+                @page { size: 58mm auto; margin: 2mm; }
+                body { 
+                    font-family: Arial, sans-serif;
+                    width: 58mm;
+                    margin: 0;
+                    padding: 2mm;
+                    font-size: 8pt;
+                }
+                .bill-header { 
+                    text-align: center;
+                    margin-bottom: 5mm;
+                }
+                .bill-header img {
+                    width: 30mm;
+                    height: 30mm;
+                }
+                .bill-header h2 {
+                    font-size: 10pt;
+                    margin: 1mm 0;
+                }
+                .bill-header p {
+                    margin: 0.5mm 0;
+                }
+                .bill-table { 
+                    width: 100%;
+                    border-collapse: collapse;
+                    font-size: 8pt;
+                }
+                .bill-table th, .bill-table td { 
+                    padding: 1mm;
+                    text-align: left;
+                    border-bottom: 0.1mm dotted #000;
+                }
+                .total-row { 
+                    font-weight: bold;
+                }
+                @media print {
+                    body { width: 58mm; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="bill-header">
+                <img src="${absoluteLogoUrl}" alt="Urban's Cafe Logo">
+                <h2>Urban's Cafe</h2>
+                <p>Jadibuti, Kathmandu</p>
+                <p>Phone: 9861965497</p>
+                <p>Customer: ${selectedCustomerName}</p>
+                <p>Date: ${new Date().toLocaleString()}</p>
+            </div>
+            <table class="bill-table">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Qty</th>
+                        <th>Price</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+
+    orderItems.forEach(item => {
+        const itemTotal = item.price * item.quantity;
+        total += itemTotal;
+        billContent += `
+            <tr>
+                <td>${item.name}</td>
+                <td>${item.quantity}</td>
+                <td>Rs.${itemTotal.toFixed(2)}</td>
+            </tr>
+        `;
+    });
+
+    billContent += `
+                    <tr class="total-row">
+                        <td colspan="2">Total</td>
+                        <td>Rs.${total.toFixed(2)}</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div style="text-align: center; margin-top: 5mm; font-size: 8pt;">
+                <p>Thank you for dining with us!</p>
+            </div>
+        </body>
+        </html>
+    `;
+
+    printWindow.document.write(billContent);
+    printWindow.document.close();
+    setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+    }, 500);
+}
+
+function printBillFromOrder(orderId, customerName) {
+    let printWindow = window.open('', '', 'width=220,height=600');
+    let total = 0;
+
+    const logoUrl = "{% static 'management/images/logo.png' %}";
+    const absoluteLogoUrl = window.location.origin + logoUrl;
+
+    // Get all items for this order
+    const orderItems = document.querySelectorAll(`.order-item[data-order-id="${orderId}"]`);
+
+    let billContent = `
+        <html>
+        <head>
+            <title>Bill</title>
+            <style>
+                @page { size: 58mm auto; margin: 2mm; }
+                body { 
+                    font-family: Arial, sans-serif;
+                    width: 58mm;
+                    margin: 0;
+                    padding: 2mm;
+                    font-size: 8pt;
+                }
+                .bill-header { 
+                    text-align: center;
+                    margin-bottom: 5mm;
+                }
+                .bill-header img {
+                    width: 30mm;
+                    height: 30mm;
+                }
+                .bill-header h2 {
+                    font-size: 10pt;
+                    margin: 1mm 0;
+                }
+                .bill-header p {
+                    margin: 0.5mm 0;
+                }
+                .bill-table { 
+                    width: 100%;
+                    border-collapse: collapse;
+                    font-size: 8pt;
+                }
+                .bill-table th, .bill-table td { 
+                    padding: 1mm;
+                    text-align: left;
+                    border-bottom: 0.1mm dotted #000;
+                }
+                .total-row { 
+                    font-weight: bold;
+                }
+                @media print {
+                    body { width: 58mm; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="bill-header">
+                <img src="${absoluteLogoUrl}" alt="Urban's Cafe Logo">
+                <h2>Urban's Cafe</h2>
+                <p>Jadibuti, Kathmandu</p>
+                <p>Phone: 9861965497</p>
+                <p>Customer: ${customerName}</p>
+                <p>Date: ${new Date().toLocaleString()}</p>
+            </div>
+            <table class="bill-table">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Qty</th>
+                        <th>Price</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+
+    orderItems.forEach(item => {
+        const quantity = parseInt(item.getAttribute('data-quantity'));
+        const price = parseFloat(item.getAttribute('data-price'));
+        const name = item.getAttribute('data-name');
+        const itemTotal = price * quantity;
+        total += itemTotal;
+
+        billContent += `
+            <tr>
+                <td>${name}</td>
+                <td>${quantity}</td>
+                <td>Rs.${itemTotal.toFixed(2)}</td>
+            </tr>
+        `;
+    });
+
+    billContent += `
+                    <tr class="total-row">
+                        <td colspan="2">Total</td>
+                        <td>Rs.${total.toFixed(2)}</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div style="text-align: center; margin-top: 5mm; font-size: 8pt;">
+                <p>Thank you for dining with us!</p>
+            </div>
+        </body>
+        </html>
+    `;
+
+    printWindow.document.write(billContent);
+    printWindow.document.close();
+    setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+    }, 500);
+}
+
+function submitOrder() {
+    if (!selectedCustomerId) {
+        alert('Please select a customer before submitting the order.');
+        return;
+    }
+
+    if (orderItems.length === 0) {
+        alert('Please add items to the order before submitting.');
+        return;
+    }
+
+    const orderData = {
+        customer: selectedCustomerId,
+        items: orderItems.map(item => ({
+            menu_item: item.menu_item,
+            quantity: item.quantity
+        }))
+    };
+
+    fetch('api/create-order-room/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify(orderData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alert(`Error: ${data.error}`);
+        } else {
+            printBill();
+            alert('Order submitted successfully!');
+            selectCustomer(selectedCustomerId, selectedCustomerName);
+            location.reload();
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while submitting the order. Please try again.');
+    });
+}
+
+function filterOrders() {
+    const dateFrom = document.getElementById('dateFrom').value;
+    const dateTo = document.getElementById('dateTo').value;
+    
+    if (!dateFrom || !dateTo) return;
+
+    const rows = document.querySelectorAll('tbody tr');
+    let filteredTotal = 0;
+
+    rows.forEach(row => {
+        const orderDate = row.getAttribute('data-order-date');
+        const totalElement = row.querySelector('.total-price');
+        const total = parseFloat(totalElement.textContent);
+
+        if (orderDate >= dateFrom && orderDate <= dateTo) {
+            row.style.display = '';
+            filteredTotal += total;
+        } else {
+            row.style.display = 'none';
+        }
+    });
+
+    document.getElementById('filteredTotal').textContent = filteredTotal.toFixed(2);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const orders = document.querySelectorAll('.total-price');
+    let dailyTotal = 0;
+    let weeklyTotal = 0;
+    let monthlyTotal = 0;
+    
+    const today = new Date();
+    const oneWeekAgo = new Date(today);
+    oneWeekAgo.setDate(today.getDate() - 7);
+    const oneMonthAgo = new Date(today);
+    oneMonthAgo.setMonth(today.getMonth() - 1);
+
+    orders.forEach(orderTotal => {
+        const orderId = orderTotal.getAttribute('data-order-id');
+        const orderItems = document.querySelectorAll(`.order-item[data-order-id="${orderId}"]`);
+        const orderRow = orderTotal.closest('tr');
+        const orderDate = new Date(orderRow.getAttribute('data-order-date'));
+        let total = 0;
+        
+        orderItems.forEach(item => {
+            const quantity = parseInt(item.getAttribute('data-quantity'));
+            const price = parseFloat(item.getAttribute('data-price'));
+            total += quantity * price;
+        });
+        
+        orderTotal.textContent = total.toFixed(2);
+
+        if (orderDate.toDateString() === today.toDateString()) {
+            dailyTotal += total;
+        }
+        if (orderDate >= oneWeekAgo) {
+            weeklyTotal += total;
+        }
+        if (orderDate >= oneMonthAgo) {
+            monthlyTotal += total;
+        }
+    });
+
+    document.getElementById('dailyTotal').textContent = dailyTotal.toFixed(2);
+    document.getElementById('weeklyTotal').textContent = weeklyTotal.toFixed(2);
+    document.getElementById('monthlyTotal').textContent = monthlyTotal.toFixed(2);
+
+    const dateFrom = document.getElementById('dateFrom');
+    const dateTo = document.getElementById('dateTo');
+    dateFrom.value = today.toISOString().split('T')[0];
+    dateTo.value = today.toISOString().split('T')[0];
+    filterOrders();
+});
+</script>
+{% endblock %}
