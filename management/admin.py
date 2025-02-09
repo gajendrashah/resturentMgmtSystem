@@ -3,7 +3,7 @@ from django.utils.html import format_html
 from django.urls import reverse
 from django.http import HttpResponse
 from django.template.loader import render_to_string
-from .models import Table, Category, SubCategory, MenuItem, Building, Room, Customer, Cart, CartItem, Sale, Purchase
+from .models import Table, Category, SubCategory, MenuItem, Building, Room, Customer, Cart, CartItem, Sale, Purchase, customerAdvance
 
 @admin.register(Table)
 class TableAdmin(admin.ModelAdmin):
@@ -88,4 +88,11 @@ class PurchaseAdmin(admin.ModelAdmin):
     list_display = ('item_name', 'quantity', 'total_cost', 'purchase_date')
     list_filter = ('purchase_date',)
     search_fields = ('item_name', 'bill_number')
+    list_per_page = 20
+    
+@admin.register(customerAdvance)
+class CustomerAdvanceAdmin(admin.ModelAdmin):
+    list_display = ('customers', 'Advance', 'Payment_Method')
+    list_filter = ('Payment_Method',)
+    search_fields = ('customers__name',)
     list_per_page = 20

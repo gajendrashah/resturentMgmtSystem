@@ -2,8 +2,9 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
-from .forms import PurchaseForm
-from .models import Cart, CartItem, MenuItem, Sale, Category, SubCategory, Table, Purchase, Customer
+from django.db.models import Sum, F
+from .forms import CustomerAdvanceForm, PurchaseForm
+from .models import Cart, CartItem, MenuItem, Sale, Category, SubCategory, Table, Purchase, Customer, customerAdvance
 
 def print_sale(request, sale_id):
     sale = get_object_or_404(Sale, id=sale_id)
@@ -15,12 +16,18 @@ def dashboard(request):
 
 def orderManagement(request):
     tables = Table.objects.all()
-    categories = Category.objects.prefetch_related('subcategories__items').all()
+    categories = Category.objects.all()
     menu_items = MenuItem.objects.all()
     orders = Cart.objects.filter(table__isnull=False)
     cart_items = CartItem.objects.filter(cart__table__isnull=False)
+    sub_catagory = SubCategory.objects.all()
     
-    context = {'tables': tables, 'categories': categories, 'menu_items': menu_items, 'orders': orders, 'cart_items': cart_items}
+    context = {'tables': tables, 
+               'categories': categories, 
+               'menu_items': menu_items, 
+               'orders': orders, 
+               'sub_catagory': sub_catagory,
+               'cart_items': cart_items}
     return render(request, 'management/pages/OrderManagement.html', context )
 
 
@@ -134,3 +141,45 @@ def create_order_room(request):
 
     return JsonResponse({'error': 'Invalid request method'}, status=405)
 
+def roomDetail(request):
+    customers = Customer.objects.all()
+    advance = customerAdvance.objects.all()   
+
+    customer_data = []
+    for customer in customers:
+        # Total Balance = Sum of (quantity * price) from CartItems
+        total_balance = CartItem.objects.filter(cart__customer=customer).aggregate(
+            total=Sum(F('quantity') * F('menu_item__price'))
+        )['total'] or 0
+
+        # Total Advance = Sum of all advances made by the customer
+        total_advance = customerAdvance.objects.filter(customers=customer).aggregate(
+            total=Sum('Advance')
+        )['total'] or 0
+
+        # Total Remaining = Balance - Advance
+        total_remaining = total_balance - total_advance
+
+        customer_data.append({
+            'customer': customer,
+            'total_balance': total_balance,
+            'total_advance': total_advance,
+            'total_remaining': total_remaining,
+        })
+    context = {'customers': customers, 'advance': advance, 'customer_data': customer_data  }
+    return render(request, 'management/pages/roomCalculation.html', context)
+
+def add_advance(request, customer_id):
+    customer = get_object_or_404(Customer, id=customer_id)
+
+    if request.method == 'POST':
+        form = CustomerAdvanceForm(request.POST)
+        if not form.is_valid():
+            return JsonResponse({'success': False, 'errors': form.errors})
+
+        form.save()
+        return JsonResponse({'success': True, 'message': 'Advance added successfully!'})
+    else:
+        form = CustomerAdvanceForm(initial={'customers': customer})
+
+    return render(request, 'management/pages/advance_form.html', {'form': form, 'customer': customer})

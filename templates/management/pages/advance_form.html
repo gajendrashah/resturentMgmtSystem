@@ -1,0 +1,5 @@
+<form id="advanceForm" method="POST" action="{% url 'add_advance' customer.id %}">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-success">Submit Advance</button>
+</form>

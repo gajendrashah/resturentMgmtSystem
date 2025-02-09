@@ -78,6 +78,17 @@ class Customer(models.Model):
     class Meta:
         ordering = ['name']
 
+class customerAdvance(models.Model):
+    customers = models.ForeignKey(Customer, on_delete=models.CASCADE)
+    Advance = models.IntegerField()
+    STATUS_CHOICES = [
+        ('Bank', 'Bank'),
+        ('Esewa', 'Esewa'),
+        ('Khalti', 'Khalti'),
+        ('Cash', 'Cash'),
+        ('PhonePay', 'PhonePay'),   
+    ]
+    Payment_Method = models.CharField(max_length=50, choices=STATUS_CHOICES, default='Cash')
 # Model for Cart
 class Cart(models.Model):
     table = models.ForeignKey(Table, on_delete=models.SET_NULL, null=True, blank=True, related_name='carts')
