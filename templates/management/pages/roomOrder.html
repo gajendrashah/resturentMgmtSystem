@@ -2,11 +2,71 @@
 {% load static %}
 {% block title %}Room Orders{% endblock %}
 {% block content %}
+<style>
+    /* Bill container */
+    <style>
+        /* General adjustments */
+        body {
+            font-size: 14px;
+        }
+    
+        .card {
+            margin-bottom: 15px;
+        }
+    
+        .table-responsive {
+            overflow-x: auto;
+        }
+    
+        /* Mobile-specific adjustments */
+        @media (max-width: 767.98px) {
+            .content-body {
+                padding: 10px;
+            }
+    
+            .card-header h5 {
+                font-size: 1.2rem;
+            }
+    
+            .card-body {
+                padding: 10px;
+            }
+    
+            .list-group-item {
+                font-size: 0.9rem;
+            }
+    
+            .btn {
+                font-size: 0.9rem;
+                padding: 5px 10px;
+            }
+    
+            .table th, .table td {
+                padding: 8px;
+            }
+    
+            .bill-header h3 {
+                font-size: 1.2rem;
+            }
+    
+            .bill-item {
+                font-size: 0.9rem;
+            }
+    
+            .bill-footer p {
+                font-size: 0.9rem;
+            }
+    
+            .col-md-3, .col-md-6 {
+                margin-bottom: 15px;
+            }
+        }
+    </style>
 <div class="content-body">
     <div class="container-fluid py-4">
         <div class="row">
             <!-- Customer Selection -->
-            <div class="col-md-3">
+            <div class="col-md-3 col-12">
                 <div class="card shadow-sm border-0">
                     <div class="card-header bg-primary text-white">
                         <h5 class="mb-0">Customer Selection</h5>
@@ -24,7 +84,7 @@
             </div>
 
             <!-- Menu Section -->
-            <div class="col-md-6">
+            <div class="col-md-6 col-12">
                 <div class="card shadow-sm border-0">
                     <div class="card-header bg-success text-white">
                         <h5 class="mb-0">Menu</h5>
@@ -32,7 +92,7 @@
                     <div class="card-body">
                         <div class="row">
                             {% for item in menu_items %}
-                                <div class="col-md-4 mb-3">
+                                <div class="col-md-4 col-6 mb-3">
                                     <div class="card border-0 shadow-sm h-100">
                                         <div class="text-center p-2">
                                             <img src="{{ item.image.url }}" class="rounded" alt="{{ item.name }}" style="width: 80px; height: 80px; object-fit: cover;">
@@ -50,11 +110,6 @@
                                         </div>
                                     </div>
                                 </div>
-                                {% if forloop.counter|divisibleby:3 %}
-                                    </div><div class="row">
-                                {% endif %}
-                            {% empty %}
-                                <p class="text-center">No menu items available.</p>
                             {% endfor %}
                         </div>
                     </div>
@@ -62,7 +117,7 @@
             </div>
 
             <!-- Order List -->
-            <div class="col-md-3">
+            <div class="col-md-3 col-12">
                 <div class="card shadow-sm border-0">
                     <div class="card-header bg-danger text-white">
                         <h5 class="mb-0">Order List</h5>
@@ -82,19 +137,19 @@
 
         <!-- Orders Table Section -->
         <div class="row mb-4">
-            <div class="col-lg-12">
+            <div class="col-12">
                 <div class="card">
                     <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
                             <div>
                                 <h4 class="card-title d-inline">Orders</h4>
                             </div>
-                            <div class="d-flex align-items-center">
-                                <div class="me-3">
+                            <div class="d-flex align-items-center flex-wrap">
+                                <div class="me-3 mb-2">
                                     <label>From:</label>
                                     <input type="date" id="dateFrom" class="form-control" onchange="filterOrders()">
                                 </div>
-                                <div>
+                                <div class="mb-2">
                                     <label>To:</label>
                                     <input type="date" id="dateTo" class="form-control" onchange="filterOrders()">
                                 </div>
@@ -102,7 +157,7 @@
                         </div>
 
                         <div class="row mb-4">
-                            <div class="col-md-3">
+                            <div class="col-md-3 col-6 mb-3">
                                 <div class="card bg-primary text-white">
                                     <div class="card-body">
                                         <h6>Daily Total</h6>
@@ -110,7 +165,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-3 col-6 mb-3">
                                 <div class="card bg-success text-white">
                                     <div class="card-body">
                                         <h6>Weekly Total</h6>
@@ -118,7 +173,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-3 col-6 mb-3">
                                 <div class="card bg-info text-white">
                                     <div class="card-body">
                                         <h6>Monthly Total</h6>
@@ -126,7 +181,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-3 col-6 mb-3">
                                 <div class="card bg-warning text-white">
                                     <div class="card-body">
                                         <h6>Filtered Total</h6>
@@ -243,21 +298,39 @@ function updateOrderList() {
     const orderList = document.getElementById('orderList');
     orderList.innerHTML = '';
     let total = 0;
-    
+
+    // Add a header for the bill
+    const header = document.createElement('div');
+    header.className = 'bill-header';
+    header.innerHTML = `
+        <h3>Urban's Cafe</h3>
+        <p>Date: ${new Date().toLocaleDateString()}</p>
+        <hr>
+    `;
+    orderList.appendChild(header);
+
+    // Add each item to the bill
     orderItems.forEach((item) => {
-        const li = document.createElement('li');
-        li.className = 'list-group-item d-flex justify-content-between align-items-center';
-        li.innerHTML = `
-            ${item.name} 
-            <span>
-                ${item.quantity} x Rs.${item.price.toFixed(2)} = Rs.${(item.price * item.quantity).toFixed(2)}
-            </span>
+        const itemRow = document.createElement('div');
+        itemRow.className = 'bill-item';
+        itemRow.innerHTML = `
+            <span>${item.name}</span>
+            <span>${item.quantity} x Rs.${item.price.toFixed(2)}</span>
+            <span>Rs.${(item.price * item.quantity).toFixed(2)}</span>
         `;
-        orderList.appendChild(li);
+        orderList.appendChild(itemRow);
         total += item.price * item.quantity;
     });
-    
-    document.getElementById('orderTotal').textContent = total.toFixed(2);
+
+    // Add a footer for the total
+    const footer = document.createElement('div');
+    footer.className = 'bill-footer';
+    footer.innerHTML = `
+        <hr>
+        <p>Total: <strong>Rs.${total.toFixed(2)}</strong></p>
+        <p>Thank you for dining with us!</p>
+    `;
+    orderList.appendChild(footer);
 }
 
 function printBill() {

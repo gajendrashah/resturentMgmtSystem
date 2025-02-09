@@ -11,6 +11,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="images/favicon.png">
     
     <link href="{% static 'management/css/style.css' %}" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
 </head>
 
@@ -29,7 +30,7 @@
         ***********************************-->
         <div class="nav-header">
             <div class="brand-logo">
-                <a href="{% url 'dashboard' %}">
+                <a href="{% url 'tableOrder' %}">
                     <b class="logo-abbr"><img src="{% static 'management/images/logo.png' %}" alt=""> </b>
                     <span class="logo-compact"><img src="{% static 'management/images/logo.png' %}" alt=""></span>
                     <span class="text" style="color: white;">
@@ -64,36 +65,40 @@
         <!--**********************************
             Sidebar start
         ***********************************-->
-        <div class="nk-sidebar">           
+        <div class="nk-sidebar">
             <div class="nk-nav-scroll">
                 <ul class="metismenu" id="menu">
-                    
-                    {% comment %} <li>
-                        <a href="{% url 'dashboard' %}" aria-expanded="false">
-                            <i class="icon-badge menu-icon"></i><span class="nav-text">Dashboard</span>
-                        </a>
-                    </li> {% endcomment %}
+                    <!-- Table Order -->
                     <li>
                         <a href="{% url 'tableOrder' %}" aria-expanded="false">
-                            <i class="icon-badge menu-icon"></i><span class="nav-text">Order Management</span>
+                            <i class="fas fa-table menu-icon"></i>
+                            <span class="nav-text">Table Order</span>
                         </a>
                     </li>
-                    <li>
-                        <a href="{% url 'purchase' %}" aria-expanded="false">
-                            <i class="icon-badge menu-icon"></i><span class="nav-text">Purchase</span>
-                        </a>
-                    </li>
+                    
+                    <!-- Room Order -->
                     <li>
                         <a href="{% url 'room_order' %}" aria-expanded="false">
-                            <i class="icon-badge menu-icon"></i><span class="nav-text">Room Order</span>
+                            <i class="fas fa-bed menu-icon"></i>
+                            <span class="nav-text">Room Order</span>
                         </a>
                     </li>
+                    
+                    <!-- Room Customer -->
                     <li>
                         <a href="{% url 'advance' %}" aria-expanded="false">
-                            <i class="icon-badge menu-icon"></i><span class="nav-text">Room Customer Detail</span>
+                            <i class="fas fa-users menu-icon"></i>
+                            <span class="nav-text">Room Customer</span>
                         </a>
                     </li>
-
+                    
+                    <!-- Purchase -->
+                    <li>
+                        <a href="{% url 'purchase' %}" aria-expanded="false">
+                            <i class="fas fa-shopping-cart menu-icon"></i>
+                            <span class="nav-text">Purchase</span>
+                        </a>
+                    </li>
                 </ul>
             </div>
         </div>
