@@ -163,7 +163,7 @@
                                         <th scope="col">Table Number</th>
                                         <th scope="col">Items</th>
                                         <th scope="col">Total</th>
-                                        <th scope="col">Status</th>
+                                        <th scope="col">Date</th>
                                         <th scope="col">Action</th>
                                     </tr>
                                 </thead>
@@ -182,7 +182,7 @@
                                             {% endfor %}
                                         </td>
                                         <td>Rs. <span class="total-price" data-order-id="{{ order.id }}">{{ order.total }}</span></td>
-                                        <td><span class="label gradient-1 btn-rounded">Paid</span></td>
+                                        <td><span class="label gradient-1 btn-rounded">{{ order.created_at }}</span></td>
                                         <td>
                                             <span>                                                
                                                 <a href="#" onclick="printBillFromOrder({{ order.id }})" data-toggle="tooltip" data-placement="top" title="Print"><i class="fa fa-print color-danger"></i></a>

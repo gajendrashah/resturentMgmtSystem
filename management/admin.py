@@ -96,3 +96,7 @@ class CustomerAdvanceAdmin(admin.ModelAdmin):
     list_filter = ('Payment_Method',)
     search_fields = ('customers__name',)
     list_per_page = 20
+
+admin.site.site_header = "E-Billing Admin"
+admin.site.site_title = "E-Billing Admin Site"
+admin.site.index_title = "Welcome to My E-Billing Admin Dashboard"
